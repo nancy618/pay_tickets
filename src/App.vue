@@ -1,8 +1,8 @@
 <template>
-  <div class="box">
+  <div class="box" v-loading="loading">
     <div class="card">
       <div class="t1">
-        <el-select placeholder="请选择张数">
+        <el-select placeholder="请选择张数" v-model="payNumber">
           <el-option label="1张" :value="1">1张</el-option>
           <el-option label="2张" :value="2">2张</el-option>
           <el-option label="3张" :value="3">3张</el-option>
@@ -10,18 +10,26 @@
           <el-option label="5张" :value="5">5张</el-option>
         </el-select>
       </div>
+      <div>
+        <span class="item" v-for="(item, index) of paidArray" :key="index">{{item}}</span>
+      </div>
       <div class="t2">
-        <el-button type="primary" style="height: 42px; width: 125px;">提交</el-button>
+        <el-button type="primary" style="height: 42px; width: 125px;" @click="pay">提交</el-button>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import axios from 'axios'
+const host = 'http://localhost:8888'
 export default {
   data: function () {
     return {
-      tickets: []
+      tickets: [],
+      loading: true,
+      payNumber: undefined,
+      paidArray: []
     }
   },
   mounted: function () {
@@ -32,7 +40,42 @@ export default {
         this.tickets.push(firstChar + j)
       }
     }
+    axios.get(`${host}/api/getPaidTickets`)
+      .then(res => {
+        console.log(res)
+        let arr = []
+        if (res.data.data) {
+          arr = res.data.data.split(',')
+        }
+        for (let i = 0; i < arr.length; i++) {
+          this.tickets.splice(this.tickets.indexOf(arr[i]), 1)
+        }
+        this.loading = false
+        console.log(this.tickets)
+      })
     console.log(this.tickets)
+  },
+  methods: {
+    pay: function () {
+      this.paidArray = []
+
+      if (!this.payNumber) {
+        this.$message({ type: 'error', message: '请选择至少一张' })
+        return
+      }
+      console.log(this.payNumber) // 2
+      for (let i = 0; i < this.payNumber; i++) {
+        const index = Math.floor(Math.random() * this.tickets.length)
+        this.paidArray.push(this.tickets[index])
+        this.tickets.splice(index, 1)
+      }
+      this.loading = true
+      axios.get(`${host}/api/setPaidTickets?paidStr=${this.paidArray.join(',')}`)
+        .then(res => {
+          this.loading = false
+          this.$message({ type: 'success', message: '购票成功' })
+        })
+    }
   }
 }
 </script>
@@ -48,16 +91,17 @@ export default {
   justify-content: center;
   width: 100%;
   height: 100vh;
-  background: #f5f5f5;
+  background: url(/images/bg.jpg) center no-repeat;
+  background-size: cover;
   .card {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    width: 650px;
-    height: 350px;
+    width: 450px;
+    height: 300px;
     border-radius: 8px;
-    box-shadow: 0px 1px 6px 0px #e6e6e6;
+    box-shadow: 0px 1px 6px 0px rgba(0, 0, 0, .1);
     background: #ffffff;
     .t1 {
       display: flex;
@@ -74,6 +118,10 @@ export default {
       justify-content: space-around;
       align-items: center;
     }
+  }
+  .item {
+    margin: 6px;
+    color: #004eaf;
   }
 }
 </style>
