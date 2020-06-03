@@ -57,12 +57,11 @@ export default {
   },
   methods: {
     pay: function () {
-      this.paidArray = []
-
       if (!this.payNumber) {
         this.$message({ type: 'error', message: '请选择至少一张' })
         return
       }
+      this.paidArray = []
       console.log(this.payNumber) // 2
       for (let i = 0; i < this.payNumber; i++) {
         const index = Math.floor(Math.random() * this.tickets.length)
